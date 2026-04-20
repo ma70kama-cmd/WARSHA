@@ -78,7 +78,28 @@
             });
         } catch(e) {}
     }
-    loadData();
+    async function loadData() {
+    try {
+        // إضافة رقم عشوائي في نهاية الرابط لمنع المتصفح من عرض نسخة قديمة (Cache)
+        const response = await fetch(scriptUrl + "?nocache=" + new Date().getTime());
+        const data = await response.json();
+        
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = ""; // مسح الجدول قبل التحميل الجديد
+
+        if (data && data.length > 0) {
+            // عرض آخر 10 عملاء وترتيبهم من الأحدث للأقدم
+            data.reverse().slice(0, 10).forEach(item => {
+                tbody.innerHTML += `<tr>
+                    <td>${item.name}</td>
+                    <td>${item.phone}</td>
+                </tr>`;
+            });
+        }
+    } catch (error) {
+        console.error("خطأ في جلب البيانات:", error);
+    }
+}
 </script>
 
 </body>
