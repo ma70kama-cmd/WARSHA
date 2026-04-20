@@ -3,83 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل بيانات العملاء</title>
+    <title>سجل بيانات العملاء</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: #25d366; margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background-color: #25d366; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        button:hover { background-color: #128c7e; }
-        table { width: 100%; margin-top: 30px; border-collapse: collapse; font-size: 14px; }
-        th, td { padding: 10px; border: 1px solid #eee; text-align: center; }
-        th { background-color: #f8f9fa; }
-        .success-msg { color: green; display: none; margin-top: 10px; font-weight: bold; }
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 20px; text-align: center; }
+        h2 { color: #333; }
+        table { width: 90%; margin: 20px auto; border-collapse: collapse; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: center; }
+        th { background-color: #4CAF50; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .loading { color: blue; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>سجل بياناتك هنا</h2>
-    <form id="regForm">
-        <input type="text" id="userName" placeholder="الاسم الكامل" required>
-        <input type="tel" id="userPhone" placeholder="رقم الهاتف" required>
-        <button type="submit" id="submitBtn">إرسال البيانات</button>
-    </form>
-    <p id="msg" class="success-msg">تم التسجيل بنجاح!</p>
-
-    <hr>
-    <h3>آخر العملاء المسجلين</h3>
-    <table>
+    <h2>قائمة العملاء المسجلين من الواتساب</h2>
+    
+    <div id="status" class="loading">جاري تحميل البيانات...</div>
+    
+    <table id="customerTable" style="display:none;">
         <thead>
             <tr>
-                <th>الاسم</th>
+                <th>التاريخ</th>
+                <th>اسم العميل</th>
                 <th>رقم الهاتف</th>
             </tr>
         </thead>
         <tbody id="tableBody"></tbody>
     </table>
-</div>
 
-<script>
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbxLWSkhpLl7Vr91RGH3O4WTxH7hBXM24V3SDhBfiDLWaF4zno575sss5iZ9ZQyDACCg/exec';
+    <script>
+        // ضع هنا رابط الـ Web App الخاص بك الذي ينتهي بـ /exec
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxLWSkhpLl7Vr91RGH3O4WTxH7hBXM24V3SDhBfiDLWaF4zno575sss5iZ9ZQyDACCg/exec';
 
-    // إرسال البيانات للجوجل شيت
-    document.getElementById('regForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const btn = document.getElementById('submitBtn');
-        btn.innerText = "جاري الإرسال...";
-        btn.disabled = true;
+        async function fetchData() {
+            try {
+                const response = await fetch(scriptUrl);
+                const data = await response.json();
+                
+                const tableBody = document.getElementById('tableBody');
+                const status = document.getElementById('status');
+                const table = document.getElementById('customerTable');
 
-        const payload = {
-            name: document.getElementById('userName').value,
-            phone: document.getElementById('userPhone').value
-        };
+                if (data.length === 0) {
+                    status.innerText = "لا توجد بيانات مسجلة بعد.";
+                    return;
+                }
 
-        fetch(scriptUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(payload)
-        }).then(() => {
-            document.getElementById('msg').style.display = 'block';
-            btn.innerText = "تم الإرسال";
-            setTimeout(() => location.reload(), 2000); // تحديث الصفحة لرؤية الاسم الجديد
-        });
-    });
+                data.forEach(customer => {
+                    const row = `<tr>
+                        <td>${new Date(customer.date).toLocaleString('ar-EG')}</td>
+                        <td>${customer.name}</td>
+                        <td>${customer.phone}</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                });
 
-    // جلب البيانات لعرضها في الجدول
-    async function loadData() {
-        try {
-            const res = await fetch(scriptUrl);
-            const data = await res.json();
-            const tbody = document.getElementById('tableBody');
-            data.slice(-5).reverse().forEach(item => { // عرض آخر 5 عملاء فقط
-                tbody.innerHTML += `<tr><td>${item.name}</td><td>${item.phone}</td></tr>`;
-            });
-        } catch(e) {}
-    }
-    loadData();
-</script>
+                status.style.display = 'none';
+                table.style.display = 'table';
+            } catch (error) {
+                document.getElementById('status').innerText = "حدث خطأ أثناء تحميل البيانات.";
+                console.error(error);
+            }
+        }
 
+        fetchData();
+    </script>
 </body>
 </html>
