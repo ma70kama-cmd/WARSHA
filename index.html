@@ -1,58 +1,47 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>طلب خدمة</title>
-  <style>
-    body {font-family: Arial, sans-serif; background:#f5f5f5; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;}
-    .container {background:#fff; padding:20px; border-radius:12px; box-shadow:0 0 10px rgba(0,0,0,0.1); width:100%; max-width:420px;}
-    h2 {text-align:center; margin-bottom:10px}
-    input {width:100%; padding:10px; margin:10px 0; border-radius:8px; border:1px solid #ccc;}
-    button {width:100%; padding:12px; background:#25D366; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer;}
-    button:hover {background:#1ebe5d;}
-    .note {font-size:12px; color:#666; text-align:center; margin-top:8px}
-  </style>
+    <meta charset="UTF-8">
+    <title>تسجيل العملاء</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f4f4; }
+        .box { background: white; padding: 20px; border-radius: 10px; display: inline-block; width: 300px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input { width: 90%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; }
+        button { background: #25d366; color: white; border: none; padding: 10px 20px; cursor: pointer; width: 100%; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+    </style>
 </head>
 <body>
+    <div class="box">
+        <h3>سجل بياناتك</h3>
+        <input type="text" id="n" placeholder="الاسم">
+        <input type="text" id="p" placeholder="الرقم">
+        <button onclick="send()">إرسال</button>
+        <p id="msg"></p>
+        <hr>
+        <h4>العملاء المسجلون</h4>
+        <table id="tab"></table>
+    </div>
 
-<div class="container">
-  <h2>اطلب خدمتك الآن</h2>
-  <input type="text" id="name" placeholder="اسمك" required>
-  <input type="tel" id="phone" placeholder="رقم موبايلك" required>
-  <button onclick="submitOrder()">إرسال الطلب</button>
-  <div class="note">سيتم فتح واتساب بعد حفظ الطلب</div>
-</div>
+    <script>
+        // *** ضع رابط الجوجل شيت الخاص بك هنا ***
+        const url = 'https://script.google.com/macros/s/AKfycbybDNuRJ4_He0ZND1e4Au3XkO3gkfA8PBoQBaSv3CvYueBjDCDmIexy5XWsYYdAS4dvTA/exec';
 
-<script>
-// 🔴 مهم: حط رابط Web App من Google Apps Script هنا
-const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxTdpqOPoMbT6Glw30Kcqr16wXIADHnv4VvfKGgg8I-jJp9TqHf3HXA810VSO9nZwM/exec";
+        function send() {
+            const data = { name: document.getElementById('n').value, phone: document.getElementById('p').value };
+            fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+            document.getElementById('msg').innerText = "تم الإرسال! حدث الصفحة لرؤية اسمك.";
+        }
 
-function submitOrder() {
-  var name = document.getElementById("name").value.trim();
-  var phone = document.getElementById("phone").value.trim();
-
-  if (!name || !phone) {
-    alert("من فضلك املأ كل البيانات");
-    return;
-  }
-
-  // 1) حفظ في Google Sheets
-  fetch(SHEET_WEBHOOK_URL, {
-    method: "POST",
-    mode: "no-cors", // عشان المتصفح
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: name, phone: phone, created_at: new Date().toISOString() })
-  });
-
-  // 2) فتح واتساب برسالة جاهزة
-  var yourNumber = "201208765484"; // رقمك
-  var message = "السلام عليكم، أنا " + name + " وقد أرسلت طلب. رقمي: " + phone;
-  var url = "https://wa.me/" + yourNumber + "?text=" + encodeURIComponent(message);
-
-  window.open(url, '_blank');
-}
-</script>
-
+        async function show() {
+            const res = await fetch(url);
+            const data = await res.json();
+            let html = '<tr><th>الاسم</th><th>الرقم</th></tr>';
+            data.reverse().forEach(x => html += `<tr><td>${x.name}</td><td>${x.phone}</td></tr>`);
+            document.getElementById('tab').innerHTML = html;
+        }
+        show();
+    </script>
 </body>
 </html>
