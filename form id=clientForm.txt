@@ -1,0 +1,23 @@
+<form id="clientForm">
+    <input type="text" id="name" placeholder="اسمك الكريم" required>
+    <input type="tel" id="phone" placeholder="رقم الواتساب" required>
+    <button type="submit">تسجيل البيانات</button>
+</form>
+
+<script>
+    document.getElementById('clientForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const data = {
+            name: document.getElementById('name').value,
+            phone: document.getElementById('phone').value
+        };
+
+        fetch('رابط_جوجل_سكريبت_هنا', {
+            method: 'POST',
+            mode: 'no-cors', // مهم جداً لتجنب مشاكل الحماية
+            body: JSON.stringify(data)
+        }).then(() => {
+            alert('تم تسجيل بياناتك بنجاح!');
+        });
+    });
+</script>
