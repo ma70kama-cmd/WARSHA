@@ -1,104 +1,56 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل بيانات العملاء</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: #25d366; margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background-color: #25d366; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        button:hover { background-color: #128c7e; }
-        table { width: 100%; margin-top: 30px; border-collapse: collapse; font-size: 14px; }
-        th, td { padding: 10px; border: 1px solid #eee; text-align: center; }
-        th { background-color: #f8f9fa; }
-        .success-msg { color: green; display: none; margin-top: 10px; font-weight: bold; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>طلب خدمة</title>
+  <style>
+    body {font-family: Arial, sans-serif; background:#f5f5f5; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;}
+    .container {background:#fff; padding:20px; border-radius:12px; box-shadow:0 0 10px rgba(0,0,0,0.1); width:100%; max-width:420px;}
+    h2 {text-align:center; margin-bottom:10px}
+    input {width:100%; padding:10px; margin:10px 0; border-radius:8px; border:1px solid #ccc;}
+    button {width:100%; padding:12px; background:#25D366; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer;}
+    button:hover {background:#1ebe5d;}
+    .note {font-size:12px; color:#666; text-align:center; margin-top:8px}
+  </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>سجل بياناتك هنا</h2>
-    <form id="regForm">
-        <input type="text" id="userName" placeholder="الاسم الكامل" required>
-        <input type="tel" id="userPhone" placeholder="رقم الهاتف" required>
-        <button type="submit" id="submitBtn">إرسال البيانات</button>
-    </form>
-    <p id="msg" class="success-msg">تم التسجيل بنجاح!</p>
-
-    <hr>
-    <h3>آخر العملاء المسجلين</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>الاسم</th>
-                <th>رقم الهاتف</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-    </table>
+  <h2>اطلب خدمتك الآن</h2>
+  <input type="text" id="name" placeholder="اسمك" required>
+  <input type="tel" id="phone" placeholder="رقم موبايلك" required>
+  <button onclick="submitOrder()">إرسال الطلب</button>
+  <div class="note">سيتم فتح واتساب بعد حفظ الطلب</div>
 </div>
 
 <script>
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbxdCYgObvgjTsyN3Rk-xLKr2cHCFG3vi4G1shAWzpzL4jjCcL7D4MrtIhObMCwN1IxLFA/exec';
+// 🔴 مهم: حط رابط Web App من Google Apps Script هنا
+const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxTdpqOPoMbT6Glw30Kcqr16wXIADHnv4VvfKGgg8I-jJp9TqHf3HXA810VSO9nZwM/exec";
 
-    // إرسال البيانات للجوجل شيت
-    document.getElementById('regForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const btn = document.getElementById('submitBtn');
-        btn.innerText = "جاري الإرسال...";
-        btn.disabled = true;
+function submitOrder() {
+  var name = document.getElementById("name").value.trim();
+  var phone = document.getElementById("phone").value.trim();
 
-        const payload = {
-            name: document.getElementById('userName').value,
-            phone: document.getElementById('userPhone').value
-        };
+  if (!name || !phone) {
+    alert("من فضلك املأ كل البيانات");
+    return;
+  }
 
-        fetch(scriptUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(payload)
-        }).then(() => {
-            document.getElementById('msg').style.display = 'block';
-            btn.innerText = "تم الإرسال";
-            setTimeout(() => location.reload(), 2000); // تحديث الصفحة لرؤية الاسم الجديد
-        });
-    });
+  // 1) حفظ في Google Sheets
+  fetch(SHEET_WEBHOOK_URL, {
+    method: "POST",
+    mode: "no-cors", // عشان المتصفح
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: name, phone: phone, created_at: new Date().toISOString() })
+  });
 
-    // جلب البيانات لعرضها في الجدول
-    async function loadData() {
-        try {
-            const res = await fetch(scriptUrl);
-            const data = await res.json();
-            const tbody = document.getElementById('tableBody');
-            data.slice(-5).reverse().forEach(item => { // عرض آخر 5 عملاء فقط
-                tbody.innerHTML += `<tr><td>${item.name}</td><td>${item.phone}</td></tr>`;
-            });
-        } catch(e) {}
-    }
-    async function loadData() {
-    try {
-        // إضافة رقم عشوائي في نهاية الرابط لمنع المتصفح من عرض نسخة قديمة (Cache)
-        const response = await fetch(scriptUrl + "?nocache=" + new Date().getTime());
-        const data = await response.json();
-        
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = ""; // مسح الجدول قبل التحميل الجديد
+  // 2) فتح واتساب برسالة جاهزة
+  var yourNumber = "201208765484"; // رقمك
+  var message = "السلام عليكم، أنا " + name + " وقد أرسلت طلب. رقمي: " + phone;
+  var url = "https://wa.me/" + yourNumber + "?text=" + encodeURIComponent(message);
 
-        if (data && data.length > 0) {
-            // عرض آخر 10 عملاء وترتيبهم من الأحدث للأقدم
-            data.reverse().slice(0, 10).forEach(item => {
-                tbody.innerHTML += `<tr>
-                    <td>${item.name}</td>
-                    <td>${item.phone}</td>
-                </tr>`;
-            });
-        }
-    } catch (error) {
-        console.error("خطأ في جلب البيانات:", error);
-    }
+  window.open(url, '_blank');
 }
 </script>
 
